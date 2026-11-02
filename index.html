@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<title>Clean YouTube Viewer</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 30px 16px;
+  background: #151515;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+main {
+  max-width: 950px;
+  margin: auto;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+p {
+  color: #bbb;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  margin: 25px 0;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  background: #252525;
+  border: 1px solid #444;
+  border-radius: 7px;
+  color: white;
+  font-size: 15px;
+}
+
+button {
+  padding: 13px 22px;
+  background: #e62117;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #bd1b13;
+}
+
+#player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#message {
+  margin-top: 15px;
+  color: #aaa;
+}
+
+@media(max-width:600px) {
+  form {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<h1>YouTube Viewer</h1>
+<p>Paste a YouTube link below to watch it.</p>
+
+<form id="form">
+  <input
+    id="url"
+    type="url"
+    placeholder="Paste YouTube video link..."
+    required
+  >
+  <button type="submit">WATCH</button>
+</form>
+
+<div id="player"></div>
+
+<p id="message">Your video will appear here.</p>
+
+<script>
+const form = document.getElementById("form");
+const input = document.getElementById("url");
+const player = document.getElementById("player");
+const message = document.getElementById("message");
+
+function getVideoID(value) {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+
+    const allowed = [
+      "youtube.com",
+      "www.youtube.com",
+      "m.youtube.com",
+      "youtu.be",
+      "www.youtu.be"
+    ];
+
+    if (!allowed.includes(host)) return null;
+
+    let id = "";
+
+    if (host.includes("youtu.be")) {
+      id = url.pathname.split("/").filter(Boolean)[0];
+    } else {
+      id = url.searchParams.get("v") ||
+        url.pathname.match(
+          /^\/(embed|shorts|live)\/([^/]+)/
+        )?.[2];
+    }
+
+    return /^[a-zA-Z0-9_-]{11}$/.test(id || "")
+      ? id
+      : null;
+
+  } catch {
+    return null;
+  }
+}
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const id = getVideoID(input.value.trim());
+
+  if (!id) {
+    message.textContent = "Please enter a valid YouTube link.";
+    player.replaceChildren();
+    return;
+  }
+
+  const iframe = document.createElement("iframe");
+
+  iframe.title = "YouTube Video Player";
+
+  iframe.referrerPolicy =
+    "strict-origin-when-cross-origin";
+
+  iframe.allow =
+    "accelerometer; autoplay; clipboard-write; " +
+    "encrypted-media; gyroscope; picture-in-picture; " +
+    "web-share";
+
+  iframe.allowFullscreen = true;
+
+  iframe.src =
+    "https://www.youtube.com/embed/" +
+    encodeURIComponent(id) +
+    "?controls=1&fs=1&playsinline=1";
+
+  player.replaceChildren(iframe);
+
+  message.textContent = "Loading video...";
+});
+</script>
+
+</main>
+</body>
+</html>
